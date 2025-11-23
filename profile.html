@@ -192,10 +192,47 @@
       } catch (e) { console.warn('broadcast failed', e); }
     }
 
-      // user is logged in
-      currentUser = user;
-      currentUserDocRef = doc(db, 'users', user.uid);
+      onAuthStateChanged(auth, async (user) => {
+  // ❌ REMOVE REDIRECT
+  if (!user) {
+    console.log("No user logged in but staying on page.");
+    return;
+  }
 
+  // ✅ User exists
+  currentUser = user;
+  currentUserDocRef = doc(db, 'users', user.uid);
+
+  // load profile data safely
+  emailEl.value = user.email || '';
+  avatarPreview.src =
+    user.photoURL ||
+    localStorage.getItem('blackUserPhoto') ||
+    "https://img.icons8.com/ios-filled/100/ffffff/user-male-circle.png";
+
+  usernameEl.value =
+    user.displayName || localStorage.getItem('blackUserDisplay') || '';
+  firstNameEl.value =
+    (user.displayName && user.displayName.split(' ')[0]) || '';
+
+  try {
+    const snap = await getDoc(currentUserDocRef);
+    if (snap.exists()) {
+      const data = snap.data();
+      lastNameEl.value = data.lastName || '';
+      ageEl.value = data.age || '';
+      genderEl.value = data.gender || '';
+      if (data.username) usernameEl.value = data.username;
+
+      if (data.photoURL) {
+        avatarPreview.src = data.photoURL;
+      }
+    }
+  } catch (e) {
+    console.error(e);
+  }
+});
+    
       // show email and basic UI
       emailEl.value = user.email || '';
       avatarPreview.src = user.photoURL || localStorage.getItem('blackUserPhoto') || "https://img.icons8.com/ios-filled/100/ffffff/user-male-circle.png";
